@@ -16,8 +16,7 @@ import shutil
 
 def get_web_page(url):
     resp = requests.get(
-        url=url,
-        cookies={'over18': '1'}
+        url=url
     )
     if resp.status_code != 200:
         print('Invalid url:', resp.url)
@@ -29,12 +28,9 @@ def parse(dom):
     headers = {'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
     req = urllib.request.Request(url=dom, headers=headers)
     soup = BeautifulSoup(urlopen(req), 'html.parser')
-
-
     links = soup.find_all('img')
-
-
     img_urls = []
+
     for link in links:
         time.sleep(0.05)
         try:
@@ -77,10 +73,10 @@ class TocMachine(GraphMachine):
             return 1
     def on_enter_introduction(self,update):
         condition=0
-        update.message.reply_text("Please choose which web to search \n(1.)google\n(2.)youtube\n(3.)baidu\n(4.)google_pic")
+        update.message.reply_text("Please choose which web to search \n(1.)google\n(2.)youtube\n(3.)baidu\n(4.)google_pic (with English only)")
 
     def is_going_to_google(self, update):
-        if update.message.text.lower()=='google':
+        if update.message.text.lower()=='google' or update.message.text.lower()=='1':
             print(str(self.condition) + "is_going_to_google")
             if self.condition==0:
                 self.condition=1
@@ -89,7 +85,7 @@ class TocMachine(GraphMachine):
                 return 1
 
     def is_going_to_youtube(self, update):
-        if update.message.text.lower()=='youtube':
+        if update.message.text.lower()=='youtube' or update.message.text.lower()=='2':
             print(str(self.condition) + "is_going_to_youtube")
             if self.condition==0:
                 self.condition=2
@@ -99,7 +95,7 @@ class TocMachine(GraphMachine):
 
 
     def is_going_to_baidu(self, update):
-        if update.message.text.lower()=='baidu':
+        if update.message.text.lower()=='baidu' or update.message.text.lower()=='3':
             print(str(self.condition) + "is_going_to_baidu")
             if self.condition==0:
                 self.condition=3
@@ -107,7 +103,7 @@ class TocMachine(GraphMachine):
                 print (update.message.text.lower())
                 return 1
     def is_going_to_google_pic(self,update):
-        if update.message.text.lower()=='google_pic':
+        if update.message.text.lower()=='google_pic' or update.message.text.lower()=='4':
             print(str(self.condition) + "is_going_to_google_pic")
             if self.condition==0:
                 self.condition=4
@@ -125,36 +121,39 @@ class TocMachine(GraphMachine):
         print(str(self.condition) + "on_enter_print_text")
         if self.condition==1:
             s1="http://www.google.com.tw/search?q="+str(update.message.text).replace(' ','+')
+            update.message.reply_text(s1)
         elif self.condition==2:
             s1="https://www.youtube.com/results?search_query="+str(update.message.text).replace(' ','+')
+            update.message.reply_text(s1)
         elif self.condition==3:
             s1="http://www.baidu.com/s?ie=utf-8&f=8&rsv_bp=1&rsv_idx=1&tn=baidu&wd="+str(update.message.text).replace(' ','_')+"&rsv_pq=81ca67440000fe45&rsv_t=d348ta%2Fm4HoXNKeiM%2FIx%2FvfWggzntyPkayF1xhf0hhkW9wJexDlwx2jH%2Bls&rqlang=cn&rsv_enter=1&rsv_sug3=11&rsv_sug1=1&rsv_sug7=100&rsv_sug2=0&inputT=1694&rsv_sug4=1695"
+            update.message.reply_text(s1)
         elif self.condition==4:
             s1="https://www.google.com.tw/search?q="+str(update.message.text).replace(' ','+')+"&tbm=isch"
+            update.message.reply_text(s1)
             print (s1)
-            update.message.reply_text("Testing URL")
             try:
+                update.message.reply_text("Testing URL")
                 current_page = get_web_page(s1)
-
                 update.message.reply_text("Get URL")
                 if current_page:
                     update.message.reply_text("Testing parse")
                     img_urls=parse(s1)
                     update.message.reply_text("Saving")
                     s=save(img_urls)
-                    #time.sleep(0.1)
                     print(s+".zip")
-                    update.message.send_document(open(s+".zip","rb"))
-                print ("End")
+                    update.message.reply_text("Opening Zip")
+                    fileopen=open(s+".zip","rb")
+                    update.message.reply_text("Sending Zip")
+                    update.message.reply_document(fileopen)
+                    update.message.reply_text("Send Zip complete")
+                    print ("End")
             except:
+                update.message.reply_text("Some error occur when processing pic")
                 print ("Not normal end")
-
         else:
             update.message.reply_text("Fail")
-            self.condition=0
-            self.go_back(update)
         self.condition=0
-        update.message.reply_text(s1)
         self.go_back(update)
         #######
 
